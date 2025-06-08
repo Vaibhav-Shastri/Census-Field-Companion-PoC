@@ -7,7 +7,6 @@ import openai
 import streamlit as st
 
 # ── Load OpenAI API Key ──
-# Set this in Streamlit Cloud: OPENAI_API_KEY
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # ── Load RAG artifacts ──
@@ -18,18 +17,28 @@ embed_model = SentenceTransformer("all-MiniLM-L6-v2")
 
 # ── RAG + LLM function ──
 def chat_local(question: str, role: str = "enumerator") -> str:
-    # 1) Encode & search
     q_emb = embed_model.encode([question], convert_to_numpy=True).astype("float32")
     faiss.normalize_L2(q_emb)
     _, idxs = index.search(q_emb, 5)
     context = [chunks[i] for i in idxs[0]]
 
-    # 2) Build prompt
     samples = {
-        "enumerator": ["What if a house is locked?", "How to record a vacant dwelling?"],
-        "supervisor": ["Show me hotspots of locked houses today.", "What’s the compliance rate?"],
-        "manager":    ["Aggregate data entry errors?", "Overall completion percentage?"]
+        "enumerator": [
+            "What if a house is locked?",
+            "How to record a vacant dwelling?"
+        ],
+        "supervisor": [
+            # <-- your corrected supervisor Qs here
+            "How do I handle inaccessible households?",
+            "When should I flag survey inconsistencies?"
+        ],
+        "manager": [
+            # <-- your corrected manager Qs here
+            "How is overall data quality trending?",
+            "What’s our district-wise completion rate?"
+        ]
     }[role]
+
     prompt = (
         f"You are Census Field Companion (role: {role}).\n"
         f"Sample questions: {samples}\n"
@@ -39,7 +48,6 @@ def chat_local(question: str, role: str = "enumerator") -> str:
         prompt += f"[{c['heading']}] {c['text']}\n"
     prompt += f"\nUser: {question}\nAnswer:"
 
-    # 3) Query the model
     resp = openai.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "system", "content": prompt}],
@@ -50,10 +58,13 @@ def chat_local(question: str, role: str = "enumerator") -> str:
 
 # ── Streamlit UI ──
 st.set_page_config(page_title="Census Field Companion", layout="wide")
+
+# Hide menus, footer, GitHub links
 hide_style = """
     <style>
-    #MainMenu {visibility: hidden !important;}
-    footer {visibility: hidden !important;}
+      #MainMenu {visibility: hidden !important;}
+      footer {visibility: hidden !important;}
+      a[href*="github.com"] {visibility: hidden !important;}
     </style>
 """
 st.markdown(hide_style, unsafe_allow_html=True)
@@ -82,17 +93,21 @@ GPT-3.5 Turbo
 
 # Main area
 st.title("📡 PoC: Census Field Companion for ORGI")
-st.markdown("Select your role, see sample questions, and ask your own question below.")
+st.markdown("Select your role, review sample questions, and type your own question below.")
 
 role = st.selectbox("👤 Your Role", ["enumerator", "supervisor", "manager"])
-samples = {
-    "enumerator": ["What if a house is locked?", "How to record a vacant dwelling?"],
-    "supervisor": ["Show me hotspots of locked houses today.", "What’s the compliance rate?"],
-    "manager":    ["Aggregate data entry errors?", "Overall completion percentage?"]
-}[role]
-
 st.markdown("**Sample questions:**")
-for q in samples:
+for q in {
+    "enumerator": ["What if a house is locked?", "How to record a vacant dwelling?"],
+    "supervisor": [
+        "How do I handle inaccessible households?",
+        "When should I flag survey inconsistencies?"
+    ],
+    "manager": [
+        "How is overall data quality trending?",
+        "What’s our district-wise completion rate?"
+    ]
+}[role]:
     st.write(f"- {q}")
 
 query = st.text_input("💬 Ask your question")
