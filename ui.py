@@ -63,7 +63,7 @@ hide_style = """
 st.markdown(hide_style, unsafe_allow_html=True)
 
 # Sidebar
-st.sidebar.title("🗄️ Manuals Used")
+st.sidebar.title("🗄️ Manuals Used (from website)")
 for m in [
     "HouseListing_Housing_Census_2011.pdf",
     "Abridged_Houselist_Household_Schedule.pdf",
