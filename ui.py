@@ -36,7 +36,7 @@ st.sidebar.markdown("""
 **Powered by**  
 OpenAI GPT-3.5 Turbo 
 
-©VS
+©vs
 
 """)
 
