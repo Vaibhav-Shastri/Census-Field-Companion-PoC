@@ -8,11 +8,17 @@ st.set_page_config(
 )
 hide_streamlit_style = """
     <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
+    /* Hide Streamlit menu & footer */
+    #MainMenu {visibility: hidden !important;}
+    footer {visibility: hidden !important;}
+    /* Hide the “Edit on GitHub” button */
+    button[aria-label="Open navigation"] {visibility: hidden !important;}
+    /* Hide collaborator avatars */
+    .css-18lh8ak {visibility: hidden !important;}
     </style>
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
 
 # 2) Sidebar: Manuals & About
 st.sidebar.title("🗄️ Manuals Used")
