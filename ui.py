@@ -28,14 +28,8 @@ def chat_local(question: str, role: str = "enumerator") -> str:
             "How to record a vacant dwelling?"
         ],
         "supervisor": [
-            # <-- your corrected supervisor Qs here
             "How do I handle inaccessible households?",
             "When should I flag survey inconsistencies?"
-        ],
-        "manager": [
-            # <-- your corrected manager Qs here
-            "How is overall data quality trending?",
-            "What’s our district-wise completion rate?"
         ]
     }[role]
 
@@ -58,12 +52,11 @@ def chat_local(question: str, role: str = "enumerator") -> str:
 
 # ── Streamlit UI ──
 st.set_page_config(page_title="Census Field Companion", layout="wide")
-
-# Hide menus, footer, GitHub links
 hide_style = """
     <style>
       #MainMenu {visibility: hidden !important;}
       footer {visibility: hidden !important;}
+      button[aria-label="Open navigation"] {visibility: hidden !important;}
       a[href*="github.com"] {visibility: hidden !important;}
     </style>
 """
@@ -80,12 +73,10 @@ for m in [
     "Urban_Frame_Jurisdiction/*"
 ]:
     st.sidebar.write(f"- {m}")
-
 st.sidebar.markdown("""
 **Helps**  
 - Enumerators with SOP guidance  
 - Supervisors surface field issues  
-- Managers see aggregate insights  
 
 **Powered by**  
 GPT-3.5 Turbo  
@@ -93,19 +84,15 @@ GPT-3.5 Turbo
 
 # Main area
 st.title("📡 PoC: Census Field Companion for ORGI")
-st.markdown("Select your role, review sample questions, and type your own question below.")
+st.markdown("Select your role, review sample questions, and ask your question below.")
 
-role = st.selectbox("👤 Your Role", ["enumerator", "supervisor", "manager"])
+role = st.selectbox("👤 Your Role", ["enumerator", "supervisor"])
 st.markdown("**Sample questions:**")
 for q in {
     "enumerator": ["What if a house is locked?", "How to record a vacant dwelling?"],
     "supervisor": [
         "How do I handle inaccessible households?",
         "When should I flag survey inconsistencies?"
-    ],
-    "manager": [
-        "How is overall data quality trending?",
-        "What’s our district-wise completion rate?"
     ]
 }[role]:
     st.write(f"- {q}")
