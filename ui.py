@@ -1,26 +1,64 @@
+import os
+import pickle
+import faiss
+import numpy as np
+from sentence_transformers import SentenceTransformer
+import openai
 import streamlit as st
-import requests
 
-# 1) Page config & hide menus
-st.set_page_config(
-    page_title="Census Field Companion",
-    layout="wide",
-)
-hide_streamlit_style = """
+# ── Load OpenAI API Key ──
+# Set this in Streamlit Cloud: OPENAI_API_KEY
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# ── Load RAG artifacts ──
+with open("models/embeds.pkl", "rb") as f:
+    chunks, embs = pickle.load(f)
+index = faiss.read_index("models/faiss.idx")
+embed_model = SentenceTransformer("all-MiniLM-L6-v2")
+
+# ── RAG + LLM function ──
+def chat_local(question: str, role: str = "enumerator") -> str:
+    # 1) Encode & search
+    q_emb = embed_model.encode([question], convert_to_numpy=True).astype("float32")
+    faiss.normalize_L2(q_emb)
+    _, idxs = index.search(q_emb, 5)
+    context = [chunks[i] for i in idxs[0]]
+
+    # 2) Build prompt
+    samples = {
+        "enumerator": ["What if a house is locked?", "How to record a vacant dwelling?"],
+        "supervisor": ["Show me hotspots of locked houses today.", "What’s the compliance rate?"],
+        "manager":    ["Aggregate data entry errors?", "Overall completion percentage?"]
+    }[role]
+    prompt = (
+        f"You are Census Field Companion (role: {role}).\n"
+        f"Sample questions: {samples}\n"
+        "Answer using only these excerpts (cite heading):\n\n"
+    )
+    for c in context:
+        prompt += f"[{c['heading']}] {c['text']}\n"
+    prompt += f"\nUser: {question}\nAnswer:"
+
+    # 3) Query the model
+    resp = openai.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "system", "content": prompt}],
+        temperature=0.2,
+        max_tokens=200
+    )
+    return resp.choices[0].message.content.strip()
+
+# ── Streamlit UI ──
+st.set_page_config(page_title="Census Field Companion", layout="wide")
+hide_style = """
     <style>
-    /* Hide Streamlit menu & footer */
     #MainMenu {visibility: hidden !important;}
     footer {visibility: hidden !important;}
-    /* Hide the “Edit on GitHub” button */
-    button[aria-label="Open navigation"] {visibility: hidden !important;}
-    /* Hide collaborator avatars */
-    .css-18lh8ak {visibility: hidden !important;}
     </style>
 """
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+st.markdown(hide_style, unsafe_allow_html=True)
 
-
-# 2) Sidebar: Manuals & About
+# Sidebar
 st.sidebar.title("🗄️ Manuals Used")
 for m in [
     "HouseListing_Housing_Census_2011.pdf",
@@ -33,56 +71,36 @@ for m in [
     st.sidebar.write(f"- {m}")
 
 st.sidebar.markdown("""
-
 **Helps**  
-- **Enumerators** with SOP guidance  
-- **Supervisors** surface field issues  
-- **Managers** see aggregate insights  
+- Enumerators with SOP guidance  
+- Supervisors surface field issues  
+- Managers see aggregate insights  
 
 **Powered by**  
-GPT-3.5 Turbo 
-
-©vs
-
+GPT-3.5 Turbo  
 """)
 
-# 3) Main UI
+# Main area
 st.title("📡 PoC: Census Field Companion for ORGI")
-st.markdown("Select your role, review sample questions, and type your own question below.")
+st.markdown("Select your role, see sample questions, and ask your own question below.")
 
-role = st.selectbox("👤 Your Role", options=["enumerator","supervisor","manager"])
-sample_questions = {
-  "enumerator": ["What if a house is locked?", "How to record a vacant dwelling?"],
-  "supervisor": ["Show me hotspots of locked houses today.", "What’s the compliance rate?"],
-  "manager": ["Aggregate data entry errors?", "Overall completion percentage?"]
+role = st.selectbox("👤 Your Role", ["enumerator", "supervisor", "manager"])
+samples = {
+    "enumerator": ["What if a house is locked?", "How to record a vacant dwelling?"],
+    "supervisor": ["Show me hotspots of locked houses today.", "What’s the compliance rate?"],
+    "manager":    ["Aggregate data entry errors?", "Overall completion percentage?"]
 }[role]
 
-st.markdown("**Sample questions for your role:**")
-for q in sample_questions:
+st.markdown("**Sample questions:**")
+for q in samples:
     st.write(f"- {q}")
 
 query = st.text_input("💬 Ask your question")
 if st.button("Submit"):
-    if not query.strip():
+    if not query:
         st.warning("Please enter a question.")
     else:
-        with st.spinner("Getting answer..."):
-            try:
-                api_url = "https://census-field-companion-your-username.streamlit.app/chat"
-                res = requests.post(api_url, json={"question": query, "role": role}, timeout=30)
-                # Check for HTTP errors
-                res.raise_for_status()
-                # Attempt to parse JSON
-                data = res.json()
-                answer = data.get("answer")
-                if not answer:
-                    st.error("No ‘answer’ field in response JSON.")
-                else:
-                    st.markdown("**Answer:**")
-                    st.write(answer)
-            except requests.exceptions.JSONDecodeError:
-                st.error(f"Invalid JSON received. Status {res.status_code} – Response text:\n\n{res.text}")
-            except requests.exceptions.HTTPError as e:
-                st.error(f"HTTP error {res.status_code}: {res.text}")
-            except Exception as e:
-                st.error(f"An unexpected error occurred: {e}")
+        with st.spinner("Getting answer…"):
+            answer = chat_local(query, role)
+        st.markdown("**Answer:**")
+        st.write(answer)
