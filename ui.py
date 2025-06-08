@@ -44,7 +44,7 @@ if st.button("Submit"):
     if not query: st.warning("Enter a question.")
     else:
         with st.spinner("Thinking…"):
-            api_url = "https://census-field-companion-poc-ikkk377l2xgfgmmrz74xmm.streamlit.app/"  # update later
+            api_url = "https://census-field-companion-poc-ikkk377l2xgfgmmrz74xmm.streamlit.app/chat"  # update later
             r = requests.post(api_url, json={"question":query,"role":role}, timeout=30)
             if r.ok:
                 st.markdown("**Answer:**")
