@@ -15,18 +15,18 @@ for m in [
     st.sidebar.write(f"- {m}")
 
 st.sidebar.markdown("""
-**Powered by**  
-OpenAI GPT-3.5 Turbo  
-
 **Helps**  
 - Enumerators: step-by-step SOP guidance  
 - Supervisors: surface common field issues  
 - Managers: aggregate process insights  
 
-**cc vs**
+**Powered by**  
+OpenAI GPT-3.5 Turbo 
+
+**©vs**
 """)
 
-st.title("📡 Census Field Companion")
+st.title("📡 PoC for ORGI - Census Field Companion")
 
 st.markdown("Welcome… Select your role and ask your question below.")
 
