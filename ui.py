@@ -17,10 +17,13 @@ for m in [
 st.sidebar.markdown("""
 **Powered by**  
 OpenAI GPT-3.5 Turbo  
+
 **Helps**  
 - Enumerators: step-by-step SOP guidance  
 - Supervisors: surface common field issues  
 - Managers: aggregate process insights  
+
+**cc vs**
 """)
 
 st.title("📡 Census Field Companion")
@@ -41,7 +44,7 @@ if st.button("Submit"):
     if not query: st.warning("Enter a question.")
     else:
         with st.spinner("Thinking…"):
-            api_url = "https://<YOUR-APP>.streamlit.app/chat"  # update later
+            api_url = "https://census-field-companion-poc-ikkk377l2xgfgmmrz74xmm.streamlit.app/"  # update later
             r = requests.post(api_url, json={"question":query,"role":role}, timeout=30)
             if r.ok:
                 st.markdown("**Answer:**")
