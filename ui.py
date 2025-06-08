@@ -1,8 +1,20 @@
 import streamlit as st
 import requests
 
-st.set_page_config(page_title="Census Field Companion", layout="wide")
+# 1) Page config & hide menus
+st.set_page_config(
+    page_title="Census Field Companion",
+    layout="wide",
+)
+hide_streamlit_style = """
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    </style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
+# 2) Sidebar: Manuals & About
 st.sidebar.title("🗄️ Manuals Used")
 for m in [
     "HouseListing_Housing_Census_2011.pdf",
@@ -15,39 +27,56 @@ for m in [
     st.sidebar.write(f"- {m}")
 
 st.sidebar.markdown("""
+
 **Helps**  
-- Enumerators: step-by-step SOP guidance  
-- Supervisors: surface common field issues  
-- Managers: aggregate process insights  
+- **Enumerators** with SOP guidance  
+- **Supervisors** surface field issues  
+- **Managers** see aggregate insights  
 
 **Powered by**  
 OpenAI GPT-3.5 Turbo 
 
-**©vs**
+©VS
+
 """)
 
-st.title("📡 PoC for ORGI - Census Field Companion")
+# 3) Main UI
+st.title("📡 PoC: Census Field Companion for ORGI")
+st.markdown("Select your role, review sample questions, and type your own question below.")
 
-st.markdown("Welcome… Select your role and ask your question below.")
-
-role = st.selectbox("Your Role", ["enumerator","supervisor","manager"])
-samples = {
-  "enumerator":["What if a house is locked?","How to record a vacant dwelling?"],
-  "supervisor":["Show me hotspots of locked houses today.","What’s the compliance rate?"],
-  "manager":["Aggregate data entry errors?","Overall completion percentage?"]
+role = st.selectbox("👤 Your Role", options=["enumerator","supervisor","manager"])
+sample_questions = {
+  "enumerator": ["What if a house is locked?", "How to record a vacant dwelling?"],
+  "supervisor": ["Show me hotspots of locked houses today.", "What’s the compliance rate?"],
+  "manager": ["Aggregate data entry errors?", "Overall completion percentage?"]
 }[role]
-st.markdown("**Sample questions:**")
-for q in samples: st.write(f"- {q}")
 
-query = st.text_input("Ask your question")
+st.markdown("**Sample questions for your role:**")
+for q in sample_questions:
+    st.write(f"- {q}")
+
+query = st.text_input("💬 Ask your question")
 if st.button("Submit"):
-    if not query: st.warning("Enter a question.")
+    if not query.strip():
+        st.warning("Please enter a question.")
     else:
-        with st.spinner("Thinking…"):
-            api_url = "https://census-field-companion-poc-ikkk377l2xgfgmmrz74xmm.streamlit.app/chat"  # update later
-            r = requests.post(api_url, json={"question":query,"role":role}, timeout=30)
-            if r.ok:
-                st.markdown("**Answer:**")
-                st.write(r.json().get("answer",""))
-            else:
-                st.error(f"Error {r.status_code}: {r.text}")
+        with st.spinner("Getting answer..."):
+            try:
+                api_url = "https://census-field-companion-your-username.streamlit.app/chat"
+                res = requests.post(api_url, json={"question": query, "role": role}, timeout=30)
+                # Check for HTTP errors
+                res.raise_for_status()
+                # Attempt to parse JSON
+                data = res.json()
+                answer = data.get("answer")
+                if not answer:
+                    st.error("No ‘answer’ field in response JSON.")
+                else:
+                    st.markdown("**Answer:**")
+                    st.write(answer)
+            except requests.exceptions.JSONDecodeError:
+                st.error(f"Invalid JSON received. Status {res.status_code} – Response text:\n\n{res.text}")
+            except requests.exceptions.HTTPError as e:
+                st.error(f"HTTP error {res.status_code}: {res.text}")
+            except Exception as e:
+                st.error(f"An unexpected error occurred: {e}")
