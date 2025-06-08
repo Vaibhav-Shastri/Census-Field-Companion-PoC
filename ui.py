@@ -54,15 +54,14 @@ def chat_local(question: str, role: str = "enumerator") -> str:
 st.set_page_config(page_title="Census Field Companion", layout="wide")
 
 # ── Hide native header, menu & footer ──
-hide_streamlit_style = """
+st.markdown("""
   <style>
     header, #MainMenu, footer {visibility: hidden !important;}
   </style>
-"""
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-# ── Overlay custom header ──
-custom_header = """
+# ── Overlay custom header with right-aligned text ──
+st.markdown("""
   <div style="
     position: fixed;
     top: 0;
@@ -72,12 +71,12 @@ custom_header = """
     padding: 12px 24px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     z-index: 1000;
+    text-align: right;
   ">
     <h1 style="margin:0; font-size:24px;">📡 PoC: Census Field Companion for ORGI</h1>
   </div>
   <div style="height:64px;"></div>
-"""
-st.markdown(custom_header, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # ── Sidebar ──
 st.sidebar.title("🗄️ Manuals Used")
