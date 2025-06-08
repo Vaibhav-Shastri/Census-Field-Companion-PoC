@@ -40,7 +40,7 @@ st.sidebar.markdown("""
 - **Managers** see aggregate insights  
 
 **Powered by**  
-OpenAI GPT-3.5 Turbo 
+GPT-3.5 Turbo 
 
 ©vs
 
