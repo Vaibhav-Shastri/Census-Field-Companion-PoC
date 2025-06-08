@@ -52,18 +52,35 @@ def chat_local(question: str, role: str = "enumerator") -> str:
 
 # ── Streamlit UI ──
 st.set_page_config(page_title="Census Field Companion", layout="wide")
-hide_style = """
-    <style>
-      #MainMenu {visibility: hidden !important;}
-      footer {visibility: hidden !important;}
-      button[aria-label="Open navigation"] {visibility: hidden !important;}
-      a[href*="github.com"] {visibility: hidden !important;}
-    </style>
-"""
-st.markdown(hide_style, unsafe_allow_html=True)
 
-# Sidebar
-st.sidebar.title("🗄️ Manuals Used (from website)")
+# ── Hide native header, menu & footer ──
+hide_streamlit_style = """
+  <style>
+    header, #MainMenu, footer {visibility: hidden !important;}
+  </style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+# ── Overlay custom header ──
+custom_header = """
+  <div style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: white;
+    padding: 12px 24px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    z-index: 1000;
+  ">
+    <h1 style="margin:0; font-size:24px;">📡 PoC: Census Field Companion for ORGI</h1>
+  </div>
+  <div style="height:64px;"></div>
+"""
+st.markdown(custom_header, unsafe_allow_html=True)
+
+# ── Sidebar ──
+st.sidebar.title("🗄️ Manuals Used")
 for m in [
     "HouseListing_Housing_Census_2011.pdf",
     "Abridged_Houselist_Household_Schedule.pdf",
@@ -73,19 +90,17 @@ for m in [
     "Urban_Frame_Jurisdiction/*"
 ]:
     st.sidebar.write(f"- {m}")
+
 st.sidebar.markdown("""
 **Helps**  
 - Enumerators with SOP guidance  
-- Supervisors manage field issues  
+- Supervisors surface field issues  
 
 **Powered by**  
 GPT-3.5 Turbo  
 """)
 
-# Main area
-st.title("📡 PoC: Census Field Companion for ORGI")
-st.markdown("Select your role, review sample questions, and ask your question below.")
-
+# ── Main Content ──
 role = st.selectbox("👤 Your Role", ["enumerator", "supervisor"])
 st.markdown("**Sample questions:**")
 for q in {
