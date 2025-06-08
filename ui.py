@@ -76,7 +76,7 @@ for m in [
 st.sidebar.markdown("""
 **Helps**  
 - Enumerators with SOP guidance  
-- Supervisors surface field issues  
+- Supervisors manage field issues  
 
 **Powered by**  
 GPT-3.5 Turbo  
